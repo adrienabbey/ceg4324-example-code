@@ -1,4 +1,5 @@
-# Code Structure
+# Chapter 2 Notes
+> **These are just personal notes based on slides from my CEG-4324 class.  I make NO guarantees that any of the following is accurate, nor do I claim any ownership of the code below.**
 
 ## Entity Declaration
 
@@ -244,7 +245,8 @@ END ARCHITECTURE behavioral;
 			- `sum` is set using a standard `OR` statement in each loop.
 		- After the loop ends, `z` is set to the value of `sum`.
 
-## Generic N-Input OR Gate
+## Examples
+### Generic N-Input OR Gate
 ```VHDL
 ARCHITECTURE structural OF full_adder IS
     COMPONENT generic_or
@@ -273,7 +275,7 @@ END structural;
 - When defining an instance of the `generic_or` component, the `n` generic is mapped to a value of `2`
 	- *NOTE*: I do *not* know why the component has the port `in1` declared as a `STD_LOGIC_VECTOR` , while the instance of that component maps to `a`, `b`, and `c`.  I'm guessing this is a typo or error in the slides.
 
-## Reduced AND Example
+### Reduced AND Example
 ```VHDL
 ENTITY RedAnd IS
     GENERIC (width : INTEGER := 8);
@@ -298,3 +300,93 @@ END Behavioral;
 
 - Note that `ENTITY` and `ARCHITECTURE` are both defined here.
 - This code will result in several 2-input `AND` gates linked together sequentially.
+
+### Reduced OR Example
+```VHDL
+ENTITY RedOr IS
+    GENERIC (width : INTEGER := 8);
+    PORT (
+        A : IN STD_LOGIC_VECTOR(width - 1 DOWNTO 0);
+        Z : OUT STD_LOGIC);
+END RedOr;
+
+ARCHITECTURE Behavioral OF RedOr IS
+BEGIN
+    reduceOr : PROCESS (A)
+        VARIABLE zv : STD_LOGIC;
+    BEGIN
+        zv := A(0);
+        FOR i IN 1 TO width - 1 LOOP
+            zv := zv OR A(i);
+        END LOOP;
+        Z <= zv;
+    END PROCESS reduceOr;
+END Behavioral;
+```
+
+- Like the previous example, this creates a series of 2-input AND gates linked sequentially.
+
+### All Zeroes Detection Example
+```VHDL
+ENTITY AllZeroDet IS
+    GENERIC (width : INTEGER := 8);
+    PORT (
+        A : IN STD_LOGIC_VECTOR(width - 1 DOWNTO 0);
+        Z : OUT STD_LOGIC);
+END AllZeroDet;
+
+ARCHITECTURE Structural OF AllZeroDet IS
+    COMPONENT RedOr
+        GENERIC (width : INTEGER);
+        PORT (
+            A : IN STD_LOGIC_VECTOR(width - 1 DOWNTO 0);
+            Z : OUT STD_LOGIC);
+    END COMPONENT;
+
+    SIGNAL ZT : STD_LOGIC;
+
+BEGIN
+    zeroFlag : RedOr
+    GENERIC MAP(width)
+    PORT MAP(A, ZT);
+    Z <= NOT ZT;
+END Structural;
+```
+
+- *NOTE*: This appears to make use of the above Reduced OR code.
+- This code looks and feels *wrong* to me.  Some of it starts to make sense after thinking about more.
+	- `width` is defined in the `AllZeroDet` entity as `8`, while the component `width` is undefined.
+	- The `zeroFlag` instance of `RedOr` maps the generic `width`, which I assume means it uses the value set in the entity above.
+	- The initial value of `A(0)` is never used to *start* the chain of OR instances, unlike previous examples.
+		- In class today (a week after this lecture), it was made rather clear that any undefined state is replaced by a memory device that remembers its previous state.  This suggests at `A(0)` is ORed with an unchanging zero.
+			- If all my assumptions are correct, this code is probably functional.  However, the diagram in the slides does not show this.
+	- There is supposedly some form of recursion going on here, but I'm not sure how that happens.
+- The example image suggests this creates a chain of reduced OR gates connected sequentially, like in the previous examples.  However, the very first reduced OR gate compares `A(0)` with `A(1)`.
+- **I really dislike this example.  Too many unknowns.**
+
+### Reduced XOR Example
+
+```VHDL
+ENTITY RedXor IS
+    GENERIC (width : INTEGER := 8);
+    PORT (
+        A : IN STD_LOGIC_VECTOR(width - 1 DOWNTO 0);
+        Z : OUT STD_LOGIC);
+END RedXor;
+
+ARCHITECTURE Behavioral OF RedXor IS
+BEGIN
+    reduceXor : PROCESS (A)
+        VARIABLE zv : STD_LOGIC;
+    BEGIN
+        zv := A(0);
+        FOR i IN 1 TO width - 1 LOOP
+            zv := zv XOR A(i);
+        END LOOP;
+        Z <= zv;
+    END PROCESS reduceXor;
+END Behavioral;
+```
+
+- This feels much better than the previous example.
+- Creates a chain of XORs that are sequentially connected.
