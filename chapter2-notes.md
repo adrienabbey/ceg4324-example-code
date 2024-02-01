@@ -390,3 +390,163 @@ END Behavioral;
 
 - This feels much better than the previous example.
 - Creates a chain of XORs that are sequentially connected.
+
+## Component Specification Syntax
+```VHDL
+FOR U0 : fa USE ENTITY work.fa(struct);
+```
+
+- This is used when declaring components in an architecture.
+	- This allows specifying specific architecture variations of the same entity.
+	- Example: a full-adder that has high-performance and low-power variants.
+- Label: `U0`
+	- *NOTE*: no, I don't know what this label is used for.
+- Component name: `fa`
+	- This name is used when specifying instances.
+- Working directory: `work`
+- Entity name: `fa`
+	- Presumably a file within the working directory
+- Architecture name: `struc`
+
+### Example: Component Instant
+```VHDL
+ARCHITECTURE struct OF ripple4 IS
+    COMPONENT fa
+    PORT (
+        a_in : IN BIT;
+        b_in : IN BIT;
+        c_in : IN BIT;
+        s : OUT BIT;
+        c_out : OUT BIT;
+    );
+
+    FOR U0 : fa USE ENTITY work.fa(struc);
+
+    SIGNAL c : bit_vector(2 DOWNTO 0);
+
+BEGIN
+
+    FA0 : fa
+    PORT MAP(
+        a_in => a(0),
+        b_in => b(0),
+        c_in => c_in_f,
+        s_out => s_out_f(0),
+        c_out => c(0)
+    );
+```
+
+- I feel like there is *far too much* information and context missing in these last few slides.
+
+## 4-bit Ripple Adder
+- A half adder performs addition of two bits, resulting in a sum bit and a carry out.
+
+### Half Adder VHDL Code
+```VHDL
+LIBRARY IEEE;
+USE ieee.std_logic_1164.ALL;
+
+ENTITY ha IS
+    PORT (
+        a, b : IN BIT;
+        sum, c_out : OUT BIT);
+END ha;
+
+ARCHITECTURE behav OF ha IS
+BEGIN
+    sum <= a XOR b;
+    c_out <= a AND b;
+END behav;
+```
+
+### Full Adder VHDL Code
+```VHDL
+LIBRARY IEEE;
+USE ieee.std_logic_1164.ALL;
+
+ENTITY fa IS
+    PORT (
+        x, y, cin : IN BIT;
+        s, cout : OUT BIT);
+END fa;
+
+ARCHITECTURE struc OF fa IS
+    -- component declaration
+    COMPONENT ha
+        PORT (
+            a, b : IN BIT;
+            sum, c_out : OUT BIT);
+    END COMPONENT;
+
+    -- component specification
+    FOR U0 : ha USE ENTITY work.ha(struct);
+    FOR U1 : ha USE ENTITY work.ha(struct);
+
+    -- signal declaration
+    SIGNAL s_tmp : BIT;
+    SIGNAL c_tmp1, c_tmp2 : BIT;
+
+BEGIN
+    -- component instantiation
+    U0 : ha PORT MAP(x, y, s_tmp, c_tmp1);
+    U1 : ha PORT MAP(
+        b => s_tmp,
+        a => cin,
+        c_out => c_tmp2,
+        sum => s);
+
+    -- generation of cout through signal assig.
+    cout <= c_tmp1 OR c_tmp2;
+END struc;
+```
+
+- This finally clarifies how component specification works.  Kinda.
+	- `U0` and `U1` are instances.
+	- `ha` is a component.
+	- Presumably, if there were multiple architectures for each `ha` file, the component specification would determine which architecture is used?
+- **We really, really should NOT be learning how to code from slides.  This is terrible.  I learn by *doing*, and I'm not *doing* anything more than typing this out from slides as I try to process what is being displayed, and forced to make a *lot* of assumptions due to lack of context.**
+
+### 4-bit Ripple Adder VHDL Code
+```VHDL
+LIBRARY IEEE;
+USE ieee.std_logic_1164.ALL;
+
+ENTITY adder4 IS
+    PORT (
+        x4, y4 : IN bit_vector(3 DOWNTO 0);
+        cin4 : IN BIT;
+        s4 : OUT bit_vector(3 DOWNTO 0);
+        cout4 : OUT BIT);
+END adder4;
+
+ARCHITECTURE struc OF adder4 IS
+    --component declaration
+    COMPONENT fa
+        PORT (
+            x, y, cin : IN BIT;
+            s, cout : OUT BIT);
+    END COMPONENT;
+
+    -- component specification
+    FOR U0 : fa USE ENTITY work.fa(struc);
+    FOR U1 : fa USE ENTITY work.fa(struc);
+    FOR U2 : fa USE ENTITY work.fa(struc);
+    FOR U3 : fa USE ENTITY work.fa(struc);
+
+    -- signal declaration
+    SIGNAL c1, c2, c3 : BIT;
+
+BEGIN
+    U0 : fa PORT MAP(x4(0), y4(0), cin4, s4(0), c1);
+    U1 : fa PORT MAP(x4(1), y4(1), c1, s4(1), c2);
+    U2 : fa PORT MAP(x4(2), y4(2), c2, s4(2), c3);
+    U3 : fa PORT MAP(x4(3), y4(3), c3, s4(3), cout4);
+END struc;
+```
+
+## 4-bit Comparator
+- Two 4-bit inputs, `A` and `B`, representing unsigned binary numbers.
+- Three outputs:
+	- `AeqB`: `1` when `A = B`, otherwise `0`
+	- `AgtB`: `1` when `A > B`, otherwise `0`
+	- `AltB`: `1` when `A < B`, otherwise `0`
