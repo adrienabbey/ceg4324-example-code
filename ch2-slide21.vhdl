@@ -1,0 +1,1 @@
+FOR U0 : fa USE ENTITY work.fa(struct);
