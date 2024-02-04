@@ -769,3 +769,154 @@ BEGIN
         AND e;
 END struc;
 ```
+
+## Exercise Examples
+### Exercise 2.1.1
+```VHDL
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+
+ENTITY sequential_1 IS
+    PORT (
+        a, b, c, clk : IN STD_LOGIC;
+        out1 : OUT STD_LOGIC);
+END ENTITY sequential_1;
+
+ARCHITECTURE sequential_structure OF sequential_1 IS
+
+    -- Component declarations
+
+    COMPONENT INV1
+        PORT (
+            a : IN STD_LOGIC;
+            z : OUT STD_LOGIC);
+    END COMPONENT;
+
+    COMPONENT OR2
+        PORT (
+            a, b : IN STD_LOGIC;
+            z : OUT STD_LOGIC);
+    END COMPONENT;
+
+    COMPONENT MUX2
+        PORT (
+            a, b, sel : IN STD_LOGIC;
+            z : OUT STD_LOGIC);
+    END COMPONENT;
+
+    COMPONENT DFF1
+        PORT (
+            d, clk : IN STD_LOGIC;
+            q : OUT STD_LOGIC);
+    END COMPONENT;
+
+    -- signal declarations
+
+    SIGNAL s1, s2, s3 : STD_LOGIC;
+
+    -- component instantiation statements
+
+BEGIN
+
+    u1 : INV1
+    PORT MAP(a => b, z => s1);
+
+    u2 : OR2
+    PORT MAP(a => b, b => c, z => s2);
+
+    u3 : MUX2
+    PORT MAP(a => s1, b => s2, sel => a, z => s3);
+
+    u4 : DFF1
+    PORT MAP(d => s3, clk => clk, q => out1);
+
+END sequential_structure;
+```
+
+- The top entity is declared as `sequential_1` but the ending statement refers to `buzzer`.  Fixed.
+
+### Exercise 2.1.2: Concurrent Boolean vs. Sequential IF Statements
+```VHDL
+--
+-- 1a: concurrent VHDL code (Boolean expression)
+--
+
+ENTITY function_F IS
+    PORT (
+        A, B, C : IN STD_LOGIC;
+        F : OUT STD_LOGIC);
+END function_F;
+
+ARCHITECTURE concurrent OF function_F IS
+BEGIN
+    F <= (NOT A AND NOT B AND NOT C) OR (NOT A AND B AND NOT C)
+        OR (A AND NOT B AND C) OR (A AND B AND NOT C);
+END concurrent;
+
+--
+-- 1b: use IF statement
+--
+
+ENTITY function_F IS
+    PORT (
+        A, B, C : IN STD_LOGIC;
+        F : OUT STD_LOGIC);
+END function_F;
+
+ARCHITECTURE behavior_1 OF function_F IS
+BEGIN
+    proc1 : PROCESS (A, B, C)
+    BEGIN
+        IF (A = '0' AND C = '0') THEN
+            F <= '1';
+        ELSIF (A = '1' AND B = '0' AND C = '1') THEN
+            F <= '1';
+        ELSIF (B = '1' AND C = '0') THEN
+            F <= '1';
+        ELSE
+            F <= '0';
+        END IF;
+    END PROCESS proc1;
+END behavior_1;
+```
+
+- Using Boolean expressions (as the first example) allows for *concurrent execution*.
+	- In other words, the compiler will optimize the resulting circuit to minimize the worst propagation delay.  Each AND group is computed individually, with an OR connecting to each.
+- Using IF statements is less efficient, both from execution time and from difficulty writing.
+	- This is because it checks each IF statement sequentially.  The resulting circuit is sequential rather than concurrent.
+
+### Case Statements
+```VHDL
+ENTITY function_F IS
+    PORT (
+        A, B, C : IN STD_LOGIC;
+        F : OUT STD_LOGIC);
+END function_F;
+
+ARCHITECTURE behavior_2 OF function_F IS
+
+    SIGNAL ABC : STD_LOGIC_VECTOR(2 DOWNTO 0);
+
+BEGIN
+
+    ABC <= (A, B, C); -- Group signals for the case statement
+
+    my_proc : PROCESS (ABC)
+    BEGIN
+        CASE (ABC) IS
+            WHEN "000" => F <= '1';
+            WHEN "010" => F <= '1';
+            WHEN "101" => F <= '-';
+            WHEN "110" => F <= '-';
+            WHEN OTHERS => F <= '0';
+        END CASE;
+    END PROCESS my_proc;
+END behavior_2;
+```
+
+- Note that signals can be used to combine inputs.
+	- Also note the different uses of double quotes for vectors and single quotes for bits (or in this case, `STD_LOGIC`).
+- Reminder: processes exist to do things whenever the specified input changes.
+- The CASE statement is processed any time the input changes.
+- Note that there are two "dont' care" states.  These are `'-'` values.
+	- Presumably, the compiler will optimize with these.
