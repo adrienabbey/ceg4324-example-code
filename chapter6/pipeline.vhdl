@@ -120,3 +120,8 @@ reg_B3_1 : reg PORT MAP(tmp_B3(0), CLK, RSTn, tmp_B3(1));
 reg_A3_2 : reg PORT MAP(tmp_A3(1), CLK, RSTn, tmp_A3(2));
 reg_B3_2 : reg PORT MAP(tmp_B3(1), CLK, RSTn, tmp_B3(2));
 -- The pattern repeats, adding another set of registers.
+
+---
+-- NOTE: The entity/architecture of the above piped adder is never mentioned in 
+-- the slides.  We seem to be expected to fill in the blanks ourselves.
+---
