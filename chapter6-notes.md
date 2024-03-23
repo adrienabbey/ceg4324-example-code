@@ -10,6 +10,16 @@
 	- Improves the throughput of the system when processing a series of tasks.
 	- Allows for increasing the clock speed, or reducing power consumption (at the same speed).
 	- Downsides: more complex design, slower than simpler designs when not processing a stream of inputs.
+## Implementing a Pipeline for a Ripple Carry Adder
+- Remember the Ripple Carry Adder: Using a series of Full Adders, the RCA sums two binary numbers, starting with the least-significant bit.
+- Because each successive bit sum depends on the previous' carry out, this can only happen in series, which means it takes time.
+- Adding a pipeline to an RCA allows for a significant performance increase when summing a stream of inputs together.
+- This works for the RCA because we can stagger inputs using registers.
+	- The least significant bit FA immediately processes the first sum.
+	- The sum of the first FA goes into a series of registers.  Each clock cycle has the result saved into the next register in series.
+	- Each additional FA has one additional register on the input, and one less register on the output.
+- The input values can change each clock cycle, using registers to remember previous inputs and the final sum in sequence.
+- **This allows for the RCA to "ripple" through *multiple* input values without having to wait for the entire sum to finish before starting the next.**
 
 ## Pipeline VHDL Example Code
 ```VHDL
