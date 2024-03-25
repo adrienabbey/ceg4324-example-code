@@ -16,6 +16,7 @@
 
 ## Booth Multiplier Method
 - The Booth Multiplier, as its name implies, is a way to multiply two signed binary numbers, $x$ and $y$.
+- Note: The final product binary size will be the sum of $x$ and $y$'s bit size minus 1.  If $x$ and $y$ are 6-bit values, the final product will be 11-bits long.
 - Start by creating 3-bit values from $y$:
 	- The first 3-bit value is of the two least-significant bits of $y$ with an additional padded zero on the right.
 	- The next 3-bit value bit-shifts left twice.  Thus, every 3-bit value overlaps one bit of the previous with one bit of the next.
@@ -26,4 +27,5 @@
 	- To find negative values, use 2's Complement.
 - For each 3-bit value:
 	- Sum the previous product (starting with zero for the first) with the product determined by the 3-bit value.
+		- Note: For each 3-bit value after the first, bit-shift the value left by two (aka pad two additional 0s on the right) before adding, padding more for each successive product sum.  If the second 3-bit value involves adding $2x$, bitshift the binary value of $2x$ left by 2; For the third 3-bit value, bitshift left by 4, etc.
 	- Repeat this for each 3-bit value.
