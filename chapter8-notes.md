@@ -10,14 +10,14 @@
 		- Useful in partitioning large behavioral code
 		- Compute and return *zero or more* output values
 
-## `RETURN` Statement
+## Functions
 - Operations in subprograms are executed by sequential statements.
 - Subprograms are finished by a `RETURN` statement.
 	- Terminates the subprogram
 	- Returns control to the calling program
 	- Functions require `RETURN` statements
 
-## `FUNCTION` Format
+### `FUNCTION` Format
 ```VHDL
 FUNCTION identifier
     [parameter list] RETURN object TYPE IS
